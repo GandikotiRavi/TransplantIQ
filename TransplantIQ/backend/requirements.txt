@@ -1,0 +1,11 @@
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.0
+python-multipart
+# For production Db2:
+# ibm_db
+# ibm_db_dbi
+# For full LangGraph + LLM:
+# langgraph
+# langchain
+# langchain-ibm   # or langchain-openai etc.

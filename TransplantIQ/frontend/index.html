@@ -1,0 +1,2026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TransplantIQ – Agentic AI Organ Transplant Coordination & Green Corridor Command</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet GIS Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <style>
+    :root {
+      --bg-dark: #070b14;
+      --bg-card: #0e1628;
+      --bg-card-sub: #131e36;
+      --border-card: #1f2d4d;
+      --border-glow: rgba(0, 240, 255, 0.25);
+      --accent-cyan: #00f0ff;
+      --accent-blue: #38bdf8;
+      --accent-purple: #8b5cf6;
+      --accent-pink: #ec4899;
+      --green-corridor: #00ff9d;
+      --green-glow: rgba(0, 255, 157, 0.35);
+      --amber-warn: #ffb020;
+      --red-urgent: #ff3366;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 15% 15%, #0f1c38 0%, #070b14 75%);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Top Navigation Header */
+    header {
+      background: rgba(14, 22, 40, 0.88);
+      border-bottom: 1px solid var(--border-card);
+      padding: 0.8rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .brand-cluster { display: flex; align-items: center; gap: 0.9rem; }
+    .pulse-heart-badge {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #ff3366, #e11d48);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 18px rgba(255, 51, 102, 0.6);
+      animation: heartbeat 1.8s infinite ease-in-out;
+      font-size: 1.25rem;
+    }
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 14px rgba(255, 51, 102, 0.5); }
+      50% { transform: scale(1.1); box-shadow: 0 0 26px rgba(255, 51, 102, 0.9); }
+    }
+    .brand-title { font-size: 1.5rem; font-weight: 900; letter-spacing: -0.6px; line-height: 1.1; }
+    .brand-title span {
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .brand-subtitle { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
+
+    .header-controls { display: flex; align-items: center; gap: 0.75rem; }
+    .status-pill {
+      font-size: 0.75rem; font-weight: 600;
+      padding: 0.4rem 0.9rem; border-radius: 999px;
+      border: 1px solid var(--border-card);
+      background: rgba(19, 30, 54, 0.85);
+      color: var(--text-main);
+      display: flex; align-items: center; gap: 0.5rem;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .status-pill:hover { border-color: var(--accent-cyan); box-shadow: 0 0 12px var(--border-glow); }
+    .dot-pulse {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--green-corridor);
+      box-shadow: 0 0 10px var(--green-corridor);
+      animation: blink 1.5s infinite;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+    /* Top Executive Telemetry KPIs */
+    .kpi-row {
+      max-width: 1500px; margin: 1.25rem auto 0; padding: 0 1.5rem;
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem;
+    }
+    @media (max-width: 1100px) { .kpi-row { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 700px) { .kpi-row { grid-template-columns: 1fr; } }
+
+    .kpi-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 12px; padding: 1rem 1.25rem;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      position: relative; overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .kpi-box:hover { transform: translateY(-2px); border-color: rgba(0, 240, 255, 0.4); }
+    .kpi-box::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+    }
+    .kpi-meta .kpi-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 600; }
+    .kpi-meta .kpi-number { font-size: 1.75rem; font-weight: 800; color: var(--text-main); font-family: var(--font-mono); margin-top: 0.2rem; }
+    .kpi-badge-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.35rem; background: var(--bg-card-sub); border: 1px solid var(--border-card);
+    }
+
+    /* Primary Navigation Tabs */
+    main { max-width: 1500px; margin: 1.5rem auto 0; padding: 0 1.5rem; }
+    .main-nav-tabs {
+      display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border-card);
+      padding-bottom: 0.85rem; margin-bottom: 1.5rem; overflow-x: auto;
+    }
+    .tab-trigger {
+      background: transparent; border: 1px solid transparent;
+      color: var(--text-muted); font-size: 0.9rem; font-weight: 600;
+      padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; gap: 0.55rem; transition: all 0.25s;
+      white-space: nowrap;
+    }
+    .tab-trigger:hover { background: rgba(19, 30, 54, 0.7); color: var(--text-main); }
+    .tab-trigger.active {
+      background: var(--bg-card);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.18);
+    }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; animation: fadeIn 0.25s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Layout Grids */
+    .view-grid-2 { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 1.5rem; }
+    .view-grid-map { display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; }
+    @media (max-width: 1080px) { .view-grid-2, .view-grid-map { grid-template-columns: 1fr; } }
+
+    .glass-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 14px; padding: 1.4rem;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+      position: relative;
+    }
+    .glass-card h2 {
+      font-size: 1.1rem; font-weight: 800; color: var(--accent-cyan);
+      margin-bottom: 0.4rem; display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-caption { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+    /* Inputs, Buttons & UI Controls */
+    textarea, select, input {
+      width: 100%; background: #080d19;
+      border: 1px solid var(--border-card); border-radius: 8px;
+      color: var(--text-main); padding: 0.75rem 1rem; font-size: 0.92rem;
+      outline: none; transition: all 0.2s; font-family: inherit;
+    }
+    textarea:focus, select:focus, input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+    }
+    textarea { min-height: 95px; resize: vertical; }
+
+    .cta-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+      background: linear-gradient(90deg, var(--accent-cyan), #0284c7);
+      color: #040914; border: none; border-radius: 8px;
+      padding: 0.7rem 1.4rem; font-weight: 800; font-size: 0.9rem;
+      cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 16px rgba(0, 240, 255, 0.25);
+    }
+    .cta-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .cta-btn:active { transform: translateY(1px); }
+    .btn-neutral { background: var(--bg-card-sub); color: var(--text-main); border: 1px solid var(--border-card); box-shadow: none; }
+    .btn-neutral:hover { border-color: var(--accent-cyan); background: #1a2846; }
+    .btn-emergency { background: linear-gradient(90deg, #10b981, #059669); color: #022c22; font-weight: 800; }
+    .btn-danger-action { background: #e11d48; color: white; }
+    .btn-mini { padding: 0.4rem 0.8rem; font-size: 0.78rem; }
+    .btn-group { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.85rem; }
+
+    /* Quick Preset Scenarios */
+    .scenario-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.85rem 0; }
+    .scenario-tag {
+      background: #0c1830; border: 1px solid #1c325c;
+      padding: 0.45rem 0.85rem; border-radius: 6px;
+      font-size: 0.78rem; color: #7dd3fc; cursor: pointer;
+      display: flex; align-items: center; gap: 0.4rem; font-weight: 600;
+      transition: all 0.2s;
+    }
+    .scenario-tag:hover {
+      background: #142852; border-color: var(--accent-cyan); color: #fff;
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    }
+
+    /* Multi-Agent Swarm Visualization Console */
+    .swarm-rack {
+      background: #060a14; border: 1px solid var(--border-card);
+      border-radius: 12px; padding: 1.1rem; margin-top: 1.1rem;
+    }
+    .rack-label {
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 0.75rem;
+      display: flex; justify-content: space-between;
+    }
+    .agent-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.6rem; }
+    @media (max-width: 900px) { .agent-grid { grid-template-columns: repeat(3, 1fr); } }
+    .agent-card {
+      background: #0b1324; border: 1px solid #1a2744;
+      border-radius: 10px; padding: 0.75rem 0.5rem; text-align: center;
+      transition: all 0.3s;
+    }
+    .agent-card.active {
+      border-color: var(--accent-cyan); background: #0c1f3d;
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.35);
+    }
+    .agent-card.done { border-color: var(--green-corridor); background: #081d1e; }
+    .agent-icon { font-size: 1.25rem; margin-bottom: 0.2rem; }
+    .agent-title { font-size: 0.75rem; font-weight: 700; color: var(--text-main); }
+    .agent-badge-state { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+    .agent-card.done .agent-badge-state { color: var(--green-corridor); }
+
+    .terminal-output {
+      font-family: var(--font-mono); font-size: 0.78rem;
+      background: #040710; border: 1px solid #18243c;
+      border-radius: 8px; padding: 0.9rem; color: #a5b4fc;
+      max-height: 200px; overflow-y: auto; white-space: pre-wrap; line-height: 1.5;
+    }
+
+    /* Candidate Match Cards */
+    .match-proposal-card {
+      background: #0b1325; border: 1px solid var(--border-card);
+      border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem;
+      transition: all 0.2s; position: relative;
+    }
+    .match-proposal-card:hover {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 6px 24px rgba(0, 240, 255, 0.12);
+      transform: translateY(-2px);
+    }
+    .match-card-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+    .match-donor-recip { font-size: 1rem; font-weight: 800; color: #ffffff; }
+    .match-subloc { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem; }
+    
+    .match-score-badge {
+      background: linear-gradient(135deg, var(--accent-purple), #4f46e5);
+      color: #fff; font-weight: 900; font-size: 1.05rem; font-family: var(--font-mono);
+      padding: 0.35rem 0.85rem; border-radius: 8px; box-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
+    }
+
+    .matrix-chips {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;
+      background: #060a14; padding: 0.7rem; border-radius: 8px; margin: 0.75rem 0;
+    }
+    .m-chip { text-align: center; }
+    .m-chip-lbl { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+    .m-chip-val { font-size: 0.92rem; font-weight: 800; color: var(--accent-cyan); font-family: var(--font-mono); margin-top: 0.1rem; }
+
+    /* Green Corridor Progress Indicator */
+    .corridor-bar-track {
+      height: 9px; background: #16243d; border-radius: 999px;
+      overflow: hidden; margin-top: 0.4rem; position: relative;
+    }
+    .corridor-bar-progress {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, var(--green-corridor), var(--amber-warn));
+      box-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+    }
+
+    /* Live GIS & Green Corridor Map View */
+    .map-container-wrap {
+      width: 100%; height: 580px;
+      border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border-card);
+      position: relative; background: #060a14;
+    }
+    #gis-leaflet-map { width: 100%; height: 100%; z-index: 1; }
+
+    .map-hud-overlay {
+      position: absolute; top: 1rem; right: 1rem; z-index: 500;
+      background: rgba(10, 16, 30, 0.92); border: 1px solid var(--accent-cyan);
+      border-radius: 10px; padding: 1rem; width: 310px;
+      backdrop-filter: blur(12px); box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    }
+    .hud-title { font-size: 0.75rem; font-weight: 800; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 0.5rem; }
+    .hud-stat-line { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.4rem; }
+    .hud-stat-line strong { color: #fff; font-family: var(--font-mono); }
+
+    .traffic-saving-badge {
+      background: rgba(0, 255, 157, 0.12); border: 1px solid var(--green-corridor);
+      color: var(--green-corridor); font-size: 0.78rem; font-weight: 700;
+      padding: 0.4rem 0.6rem; border-radius: 6px; text-align: center; margin-top: 0.6rem;
+    }
+
+    /* Live Ticking Ischemia Clock */
+    .ticking-clock {
+      font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800;
+      color: var(--amber-warn); display: flex; align-items: center; gap: 0.4rem;
+    }
+
+    /* Tables */
+    .data-table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { text-align: left; padding: 0.75rem 0.7rem; border-bottom: 1px solid #17243d; }
+    th { color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.6px; background: #080d19; }
+    tr:hover td { background: rgba(19, 30, 54, 0.5); }
+
+    /* Modals */
+    .modal-cover {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.82); z-index: 2000;
+      align-items: center; justify-content: center; backdrop-filter: blur(6px);
+    }
+    .modal-cover.visible { display: flex; }
+    .modal-dossier {
+      background: var(--bg-card); border: 1px solid var(--border-card);
+      border-radius: 14px; max-width: 820px; width: 92%; max-height: 88vh;
+      overflow-y: auto; padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+    }
+    .dossier-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .close-cross { background: none; border: none; color: var(--text-muted); font-size: 1.6rem; cursor: pointer; }
+
+    /* Regulatory Banner */
+    .regulatory-banner {
+      margin-top: 2rem; padding: 1.1rem 1.4rem;
+      background: rgba(255, 176, 32, 0.08); border: 1px solid rgba(255, 176, 32, 0.3);
+      border-radius: 10px; font-size: 0.82rem; color: #fde047; line-height: 1.55;
+    }
+
+    /* Print Styling for Official Medical Allocation Dossier */
+    @media print {
+      body { background: white !important; color: black !important; }
+      header, .main-nav-tabs, .kpi-row, .btn-group, .modal-cover .btn-group, .scenario-tags { display: none !important; }
+      .modal-dossier { border: none !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Executive Navigation Header -->
+  <header>
+    <div class="brand-cluster">
+      <div class="pulse-heart-badge">🫀</div>
+      <div>
+        <div class="brand-title">Transplant<span>IQ</span></div>
+        <div class="brand-subtitle">Agentic AI Clinical Coordination & Traffic-Less Green Corridor Command · IBM Db2 Hack 2026</div>
+      </div>
+    </div>
+    <div class="header-controls">
+      <div class="status-pill" onclick="openDb2Modal()">
+        <span class="dot-pulse"></span>
+        <span>IBM Db2 for z/OS Developer (DRDA / Port 446)</span>
+      </div>
+      <div class="status-pill">
+        <span>👨‍⚕️ Dr. Sarah Chen, MD (Chief Transplant Officer)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Top KPI Telemetry Bar -->
+  <div class="kpi-row">
+    <div class="kpi-box">
+      <div class="kpi-meta">
+        <div class="kpi-title">Active Donors (SOFR)</div>
+        <div class="kpi-number" id="kpi-donors-val">20</div>
+      </div>
+      <div class="kpi-badge-icon" style="color:var(--accent-cyan)">🫀</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-meta">
+        <div class="kpi-title">Waitlisted Candidates</div>
+        <div class="kpi-number" id="kpi-recipients-val">35</div>
+      </div>
+      <div class="kpi-badge-icon" style="color:var(--accent-purple)">👥</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-meta">
+        <div class="kpi-title">Integrated Transplant Hubs</div>
+        <div class="kpi-number" id="kpi-hospitals-val">8</div>
+      </div>
+      <div class="kpi-badge-icon" style="color:var(--accent-blue)">🏥</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-meta">
+        <div class="kpi-title">Green Corridor Safety Margin</div>
+        <div class="kpi-number" id="kpi-margin-val" style="color:var(--green-corridor)">4.2h</div>
+      </div>
+      <div class="kpi-badge-icon" style="color:var(--green-corridor)">⚡</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-meta">
+        <div class="kpi-title">Human Sign-Off Queue</div>
+        <div class="kpi-number" id="kpi-pending-val" style="color:var(--amber-warn)">0</div>
+      </div>
+      <div class="kpi-badge-icon" style="color:var(--amber-warn)">✍️</div>
+    </div>
+  </div>
+
+  <!-- Primary Application Views -->
+  <main>
+    <div class="main-nav-tabs">
+      <button class="tab-trigger active" onclick="activateTab('tab-agent-copilot')">🤖 Agent Swarm & Copilot</button>
+      <button class="tab-trigger" onclick="activateTab('tab-driver-nav')">🚑 Driver Route Navigation</button>
+      <button class="tab-trigger" onclick="activateTab('tab-green-corridor-map')">🗺️ Live GIS & Green Corridor Radar</button>
+      <button class="tab-trigger" onclick="activateTab('tab-cross-match-matrix')">🧬 Clinical Cross-Match Matrix</button>
+      <button class="tab-trigger" onclick="activateTab('tab-db2-time-travel')">⏱️ Db2 Time-Travel & Audit Ledger</button>
+      <button class="tab-trigger" onclick="activateTab('tab-hitl-review')">📋 Human Review & Dispatch Queue</button>
+      <button class="tab-trigger" onclick="activateTab('tab-db2-workbench')">🗄️ Db2 SQL & Optimizer Workbench</button>
+    </div>
+
+    <!-- TAB 1: AGENT SWARM & COPILOT -->
+    <div id="tab-agent-copilot" class="tab-pane active">
+      <div class="view-grid-2">
+        <div>
+          <div class="glass-card">
+            <h2>
+              <span>🤖 Multi-Agent Clinical Query Console</span>
+              <span class="status-pill" style="font-size:0.7rem;padding:0.25rem 0.6rem">LangGraph Orchestration</span>
+            </h2>
+            <div class="card-caption">
+              Issue clinical directives in natural language. The 6-agent swarm inspects Db2 records, evaluates 5-locus HLA, synthesizes a traffic-less green corridor route, and validates NOTTO/UNOS bioethics.
+            </div>
+
+            <textarea id="agent-query-input" placeholder="e.g. Find urgent heart matches within 4-hour Cold Ischemia limit using police green corridor..."></textarea>
+
+            <div class="scenario-tags">
+              <span class="scenario-tag" onclick="selectScenario('heart')">⚡ Pediatric Heart: 4h Ischemia Limit & Green Corridor</span>
+              <span class="scenario-tag" onclick="selectScenario('kidney')">🧬 Multi-Center Kidney Cross-Match (HLA A/B/C/DR/DQ)</span>
+              <span class="scenario-tag" onclick="selectScenario('liver')">🩺 High MELD Emergency Liver Allocation</span>
+              <span class="scenario-tag" onclick="selectScenario('temporal')">🕰️ Db2 Time-Travel: Historical Waitlist Audit</span>
+            </div>
+
+            <div class="btn-group">
+              <button class="cta-btn" onclick="runAgentSwarm()">🚀 Dispatch Multi-Agent Swarm</button>
+              <button class="cta-btn btn-neutral" onclick="resetDemoDatabase()">🔄 Reseed Clinical Cohort</button>
+            </div>
+
+            <!-- Agent Execution Swarm Visualizer -->
+            <div class="swarm-rack">
+              <div class="rack-label">
+                <span>Autonomous Agent Swarm Pipeline</span>
+                <span id="swarm-exec-time" style="color:var(--accent-cyan);font-family:var(--font-mono)">Latency: 142ms</span>
+              </div>
+              <div class="agent-grid">
+                <div class="agent-card" id="agent-supervisor">
+                  <div class="agent-icon">🧭</div>
+                  <div class="agent-title">Supervisor</div>
+                  <div class="agent-badge-state" id="badge-supervisor">Ready</div>
+                </div>
+                <div class="agent-card" id="agent-patient">
+                  <div class="agent-icon">📋</div>
+                  <div class="agent-title">Patient</div>
+                  <div class="agent-badge-state" id="badge-patient">Idle</div>
+                </div>
+                <div class="agent-card" id="agent-matching">
+                  <div class="agent-icon">🧬</div>
+                  <div class="agent-title">Matching</div>
+                  <div class="agent-badge-state" id="badge-matching">Idle</div>
+                </div>
+                <div class="agent-card" id="agent-logistics">
+                  <div class="agent-icon">🚁</div>
+                  <div class="agent-title">Logistics</div>
+                  <div class="agent-badge-state" id="badge-logistics">Idle</div>
+                </div>
+                <div class="agent-card" id="agent-bioethics">
+                  <div class="agent-icon">⚖️</div>
+                  <div class="agent-title">Bioethics</div>
+                  <div class="agent-badge-state" id="badge-bioethics">Idle</div>
+                </div>
+                <div class="agent-card" id="agent-coordination">
+                  <div class="agent-icon">✍️</div>
+                  <div class="agent-title">Coordination</div>
+                  <div class="agent-badge-state" id="badge-coordination">Idle</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top:1rem">
+              <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);margin-bottom:0.35rem">Real-Time Swarm Reasoning Trace:</div>
+              <div class="terminal-output" id="swarm-trace-output">System ready. Click any preset scenario above or enter a directive to initiate agent coordination.</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="glass-card">
+            <h2>
+              <span>🎯 Ranked Clinical Allocation Proposals</span>
+              <span id="matches-count-pill" class="status-pill" style="font-size:0.75rem">0 Verified Matches</span>
+            </h2>
+            <div class="card-caption">
+              Algorithmically ranked by clinical utility, 5-locus HLA compatibility, zero-traffic transport viability, and ethical parity.
+            </div>
+
+            <div id="proposals-target-container">
+              <div style="text-align:center;padding:3.5rem 1rem;color:var(--text-muted)">
+                <div style="font-size:2.5rem;margin-bottom:0.5rem">🩺</div>
+                <div>No evaluation executed yet. Run the agent swarm to compute verified proposals.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: DRIVER ROUTE NAVIGATION (ITEM COLLECTION -> DROPOFF) -->
+    <div id="tab-driver-nav" class="tab-pane">
+      <div class="view-grid-map">
+        <div>
+          <div class="glass-card" style="padding:1.1rem;margin-bottom:1rem">
+            <h2>
+              <span>🚑 Live Driver Navigation Cockpit</span>
+              <span class="status-pill" style="color:var(--green-corridor);border-color:var(--green-corridor)">
+                <span class="dot-pulse"></span> Zero-Traffic Police Escort Active
+              </span>
+            </h2>
+            <div class="card-caption">
+              Turn-by-turn Driver Guidance from <strong>START POINT (Item Collection / Harvest Hospital)</strong> to <strong>END POINT (Dropping Point / Recipient Hospital)</strong>.
+            </div>
+
+            <!-- Item & Hospital Quick Selector -->
+            <div style="background:#080d19;border:1px solid #1a2744;border-radius:10px;padding:1rem;margin-bottom:1rem">
+              <div style="display:grid;grid-template-columns:1.2fr 1fr auto;gap:0.75rem;align-items:end">
+                <div>
+                  <label style="font-size:0.75rem;font-weight:700;color:var(--accent-cyan)">📦 1. SELECT ITEM TO COLLECT (HARVEST HOSPITAL):</label>
+                  <select id="driver-donor-item-select" onchange="onDriverItemChanged()"></select>
+                </div>
+                <div>
+                  <label style="font-size:0.75rem;font-weight:700;color:var(--accent-purple)">🏥 2. DROPPING POINT (RECIPIENT HOSPITAL):</label>
+                  <select id="driver-recipient-hosp-select" onchange="onDriverRouteChanged()"></select>
+                </div>
+                <div>
+                  <button class="cta-btn btn-emergency" onclick="calculateAndDisplayDriverRoute()">
+                    ⚡ Calculate Route
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Side-by-Side Start & End Points Display -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+              <!-- START POINT CARD -->
+              <div style="background:#081d19;border:1px solid var(--green-corridor);border-radius:10px;padding:1rem;box-shadow:0 0 16px rgba(0,255,157,0.15)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem">
+                  <span class="status-pill" style="background:#042f22;color:var(--green-corridor);border-color:var(--green-corridor);font-size:0.7rem;padding:0.2rem 0.6rem">
+                    🟢 START POINT · COLLECTION / PICKUP
+                  </span>
+                  <span style="font-size:0.72rem;color:var(--text-muted)">Harvest Bay</span>
+                </div>
+                <div style="font-size:1.1rem;font-weight:800;color:#fff" id="driver-start-name">Apollo Hospitals Main</div>
+                <div style="font-size:0.8rem;color:#cbd5e1" id="driver-start-loc">Harvest Surgical Suite 3, Emergency Trauma Wing A</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.2rem" id="driver-start-city">Chennai, Tamil Nadu</div>
+                
+                <div style="background:#041512;border-radius:6px;padding:0.55rem;margin-top:0.6rem;font-size:0.75rem">
+                  <div>📦 Item: <strong style="color:var(--green-corridor)" id="driver-item-label">HEART (Box #TX-107)</strong></div>
+                  <div>🌡️ Container: <strong style="color:#fff" id="driver-temp-label">3.8°C (UW Perfusion Cold Storage)</strong></div>
+                  <div>📞 Harvest Lead Phone: <span style="font-family:var(--font-mono);color:var(--accent-cyan)">+91-44-2829-0200</span></div>
+                </div>
+              </div>
+
+              <!-- END POINT CARD -->
+              <div style="background:#1b0d19;border:1px solid var(--red-urgent);border-radius:10px;padding:1rem;box-shadow:0 0 16px rgba(255,51,102,0.15)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem">
+                  <span class="status-pill" style="background:#3b071a;color:var(--red-urgent);border-color:var(--red-urgent);font-size:0.7rem;padding:0.2rem 0.6rem">
+                    🔴 END POINT · DROPOFF / DESTINATION
+                  </span>
+                  <span style="font-size:0.72rem;color:var(--text-muted)">Recipient OT</span>
+                </div>
+                <div style="font-size:1.1rem;font-weight:800;color:#fff" id="driver-end-name">Manipal Hospital Old Airport Rd</div>
+                <div style="font-size:0.8rem;color:#cbd5e1" id="driver-end-loc">Transplant Operating Theater OR-4, Intensive Care Tower B</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.2rem" id="driver-end-city">Bengaluru, Karnataka</div>
+
+                <div style="background:#190610;border-radius:6px;padding:0.55rem;margin-top:0.6rem;font-size:0.75rem">
+                  <div>👨‍⚕️ Surgical Lead: <strong style="color:#fff" id="driver-team-label">Dr. V. Ramanathan, Chief Recipient Lead</strong></div>
+                  <div>⚡ OT Readiness: <strong style="color:var(--green-corridor)">ANESTHESIA ACTIVE · STERILE FIELD READY</strong></div>
+                  <div>📞 Trauma OT Phone: <span style="font-family:var(--font-mono);color:var(--accent-cyan)">+91-80-2502-4444</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Driver Leaflet Map -->
+            <div class="map-container-wrap" style="height:460px">
+              <div id="driver-leaflet-map" style="width:100%;height:100%"></div>
+
+              <!-- Driver HUD -->
+              <div class="map-hud-overlay" style="width:340px">
+                <div class="hud-title">🚑 Live Driver Telemetry HUD</div>
+                <div class="hud-stat-line">
+                  <span>Current Vehicle Speed:</span>
+                  <strong id="driver-live-speed" style="color:var(--green-corridor);font-size:1.05rem">95 km/h</strong>
+                </div>
+                <div class="hud-stat-line">
+                  <span>Corridor Route Distance:</span>
+                  <strong id="driver-total-distance">290.4 km</strong>
+                </div>
+                <div class="hud-stat-line">
+                  <span>Green Corridor ETA:</span>
+                  <strong id="driver-corridor-eta" style="color:var(--green-corridor)">1h 40m</strong>
+                </div>
+                <div class="hud-stat-line">
+                  <span>Congested Traffic Delay:</span>
+                  <strong style="color:var(--amber-warn)" id="driver-normal-traffic-time">5h 45m (Saved 4h 05m)</strong>
+                </div>
+                <div class="hud-stat-line">
+                  <span>Cold Ischemia Clock:</span>
+                  <strong class="ticking-clock" id="driver-clock" style="font-size:0.95rem">⏱️ 04:28:10</strong>
+                </div>
+
+                <!-- Driver Controls -->
+                <div style="display:flex;gap:0.4rem;margin-top:0.8rem">
+                  <button class="cta-btn btn-mini btn-emergency" id="btn-start-sim" onclick="startDriverSimulation()">▶️ Start Simulation</button>
+                  <button class="cta-btn btn-mini btn-neutral" id="btn-pause-sim" onclick="pauseDriverSimulation()">⏸️ Pause</button>
+                  <button class="cta-btn btn-mini btn-neutral" onclick="resetDriverSimulation()">🔄 Reset</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Turn-by-Turn & Db2 for z/OS Audit -->
+        <div>
+          <div class="glass-card" style="margin-bottom:1rem">
+            <h2>
+              <span>📋 Turn-by-Turn Police Escort Directions</span>
+              <button class="cta-btn btn-neutral btn-mini" onclick="printDriverWaybill()">🖨️ Driver Waybill</button>
+            </h2>
+            <div class="card-caption">Zero-traffic instructions from Collection Bay to Destination OT.</div>
+
+            <div id="driver-turns-feed" style="max-height:360px;overflow-y:auto;background:#060a14;border:1px solid #1a2744;border-radius:8px;padding:0.75rem">
+              Loading turn-by-turn route...
+            </div>
+          </div>
+
+          <!-- IBM Db2 for z/OS Transaction Audit Card -->
+          <div class="glass-card">
+            <h2>
+              <span>🏛️ IBM Db2 for z/OS DRDA Audit Proof</span>
+              <span class="status-pill" style="font-size:0.68rem;color:var(--accent-cyan);border-color:var(--accent-cyan)">Port 446 (DRDA)</span>
+            </h2>
+            <div class="card-caption">All driver dispatches are committed directly to IBM Db2 for z/OS Subsystem DB2A with two-phase commit.</div>
+
+            <div style="background:#060a14;border:1px solid #1a2744;border-radius:8px;padding:0.85rem;font-size:0.75rem;font-family:var(--font-mono)">
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem">
+                <span style="color:var(--text-muted)">Db2 Subsystem:</span>
+                <strong style="color:var(--accent-cyan)" id="zos-subsystem-id">DB2A (z/OS V2.5)</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem">
+                <span style="color:var(--text-muted)">Location Name:</span>
+                <strong style="color:#fff" id="zos-loc-id">DB2ZOS_PROD</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem">
+                <span style="color:var(--text-muted)">Protocol & Port:</span>
+                <strong style="color:var(--green-corridor)">DRDA over AT-TLS (Port 446)</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem">
+                <span style="color:var(--text-muted)">Tablespace:</span>
+                <strong style="color:#fff">TRANSPL.TSTRANS (BP1)</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem">
+                <span style="color:var(--text-muted)">Transaction ID:</span>
+                <strong style="color:var(--accent-purple)" id="zos-tx-id">ZOS_DISPATCH_94B1...</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between">
+                <span style="color:var(--text-muted)">Commit Status:</span>
+                <strong style="color:var(--green-corridor)">COMMITTED (TWO-PHASE SYNCPOINT)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: LIVE GIS & GREEN CORRIDOR RADAR MAP -->
+    <div id="tab-green-corridor-map" class="tab-pane">
+      <div class="view-grid-map">
+        <div class="glass-card" style="padding:1rem">
+          <h2>
+            <span>🗺️ Real-Time GIS Traffic-Less Green Corridor Map</span>
+            <div style="display:flex;gap:0.5rem">
+              <span class="status-pill" style="color:var(--green-corridor);border-color:var(--green-corridor)">
+                <span class="dot-pulse"></span> Zero-Traffic Police Escort Active
+              </span>
+            </div>
+          </h2>
+          <div class="card-caption" style="margin-bottom:0.75rem">
+            Live geospatial routing between transplant centers. Visualizes civilian congested traffic vs police-cleared emergency Green Corridors (Harit Path) and Air Medical corridors.
+          </div>
+
+          <div class="map-container-wrap">
+            <div id="gis-leaflet-map"></div>
+
+            <!-- Overlaid Live Telemetry HUD -->
+            <div class="map-hud-overlay" id="map-hud">
+              <div class="hud-title">⚡ Live Corridor Telemetry</div>
+              <div class="hud-stat-line">
+                <span>Active Route:</span>
+                <strong id="hud-route-name">Chennai → Bengaluru</strong>
+              </div>
+              <div class="hud-stat-line">
+                <span>Dispatch Mode:</span>
+                <strong id="hud-mode-name" style="color:var(--accent-cyan)">Air Ambulance Helicopter</strong>
+              </div>
+              <div class="hud-stat-line">
+                <span>Route Distance:</span>
+                <strong id="hud-distance-val">290.4 km</strong>
+              </div>
+              <div class="hud-stat-line">
+                <span>Normal Civilian Traffic:</span>
+                <strong style="color:var(--amber-warn)" id="hud-traffic-time">5h 45m</strong>
+              </div>
+              <div class="hud-stat-line">
+                <span>Green Corridor Time:</span>
+                <strong style="color:var(--green-corridor)" id="hud-corridor-time">1h 40m</strong>
+              </div>
+              <div class="hud-stat-line">
+                <span>Ischemia Safety Window:</span>
+                <strong id="hud-safety-window" style="color:var(--green-corridor)">+3.2h Buffer</strong>
+              </div>
+
+              <div class="traffic-saving-badge" id="hud-saving-banner">
+                🚀 SAVED 4h 05m (71% FASTER VIA GREEN CORRIDOR)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="glass-card">
+            <h2><span>🚁 Corridor Dispatch Simulator</span></h2>
+            <div class="card-caption">Simulate emergency hospital-to-hospital zero-traffic clearance for any organ.</div>
+
+            <label style="font-size:0.78rem;font-weight:700;color:var(--text-muted)">Harvest Hospital (Donor Facility):</label>
+            <select id="map-donor-select" style="margin-bottom:0.8rem" onchange="renderSelectedCorridorRoute()"></select>
+
+            <label style="font-size:0.78rem;font-weight:700;color:var(--text-muted)">Transplant Center (Recipient ICU):</label>
+            <select id="map-recip-select" style="margin-bottom:0.8rem" onchange="renderSelectedCorridorRoute()"></select>
+
+            <label style="font-size:0.78rem;font-weight:700;color:var(--text-muted)">Organ Biological Tolerance:</label>
+            <select id="map-organ-select" style="margin-bottom:1rem" onchange="renderSelectedCorridorRoute()">
+              <option value="heart">Heart (Strict 4-6h Ischemia Limit)</option>
+              <option value="lung">Lung (Strict 6-8h Ischemia Limit)</option>
+              <option value="liver">Liver (10-12h Ischemia Limit)</option>
+              <option value="kidney">Kidney (24-36h Ischemia Limit)</option>
+              <option value="cornea">Cornea (Up to 14 days storage)</option>
+            </select>
+
+            <button class="cta-btn btn-emergency" style="width:100%" onclick="renderSelectedCorridorRoute()">
+              ⚡ Establish Green Corridor & Recalculate
+            </button>
+
+            <!-- Checkpoint Trajectory List -->
+            <div style="margin-top:1.25rem">
+              <div style="font-size:0.78rem;font-weight:700;color:var(--accent-cyan);margin-bottom:0.4rem">Corridor Police & Waypoint Checkpoints:</div>
+              <div id="waypoints-feed" style="background:#060a14;border:1px solid #1a2744;border-radius:8px;padding:0.75rem;max-height:190px;overflow-y:auto;font-size:0.75rem;color:#cbd5e1">
+                Loading checkpoints...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: CLINICAL CROSS-MATCH MATRIX -->
+    <div id="tab-cross-match-matrix" class="tab-pane">
+      <div class="glass-card">
+        <h2>
+          <span>🧬 Multi-Center Organ Allocation Matrix</span>
+          <button class="cta-btn btn-neutral btn-mini" onclick="loadCrossMatchMatrix()">Re-screen All Waiting Candidates</button>
+        </h2>
+        <div class="card-caption">
+          Exhaustive cross-matching across all 8 transplant centers. Filter by organ or blood group.
+        </div>
+
+        <div style="display:flex;gap:1rem;margin-bottom:1rem">
+          <select id="matrix-filter-organ" style="max-width:220px" onchange="loadCrossMatchMatrix()">
+            <option value="">All Organs</option>
+            <option value="kidney">Kidney</option>
+            <option value="liver">Liver</option>
+            <option value="heart">Heart</option>
+            <option value="lung">Lung</option>
+            <option value="cornea">Cornea</option>
+          </select>
+          <select id="matrix-filter-blood" style="max-width:220px" onchange="loadCrossMatchMatrix()">
+            <option value="">All Blood Groups</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+          </select>
+        </div>
+
+        <div id="matrix-table-wrap" class="data-table-scroll">
+          <div style="padding:2rem;text-align:center;color:var(--text-muted)">Loading cross-match matrix...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: DB2 TIME TRAVEL & AUDIT LEDGER -->
+    <div id="tab-db2-time-travel" class="tab-pane">
+      <div class="glass-card" style="margin-bottom:1.5rem">
+        <h2>
+          <span>⏱️ IBM Db2 Time-Travel Reconstruction (SYSTEM_TIME AS OF)</span>
+          <button class="cta-btn btn-neutral btn-mini" onclick="executeTemporalReconstruction()">Query Historical State</button>
+        </h2>
+        <div class="card-caption">
+          Regulatory compliance under UNOS and NOTTO legally mandates point-in-time waitlist reconstruction. Db2 Temporal Tables reconstruct exact hospital waitlist states at any given historical second.
+        </div>
+
+        <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1rem">
+          <input type="text" id="temporal-timestamp-input" value="2026-11-10T12:00:00Z" style="max-width:340px;font-family:var(--font-mono)" />
+          <button class="cta-btn btn-neutral btn-mini" onclick="document.getElementById('temporal-timestamp-input').value=new Date().toISOString(); executeTemporalReconstruction()">Now (UTC)</button>
+        </div>
+
+        <div id="temporal-console-output" class="terminal-output" style="max-height:170px">
+          Click "Query Historical State" to execute native Db2 temporal query.
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <h2>
+          <span>🔒 Cryptographic Workflow Audit Ledger (Db2 WORKFLOW_LOG)</span>
+          <button class="cta-btn btn-neutral btn-mini" onclick="loadAuditLogs()">Refresh Ledger</button>
+        </h2>
+        <div class="card-caption">
+          Tamper-evident ledger recording all agent actions, logistics clearances, and clinician signatures with SHA-256 signatures.
+        </div>
+        <div class="data-table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Log ID</th>
+                <th>Autonomous Agent</th>
+                <th>Action Code</th>
+                <th>Details</th>
+                <th>Timestamp</th>
+                <th>Cryptographic SHA-256 Signature</th>
+              </tr>
+            </thead>
+            <tbody id="audit-table-rows">
+              <tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Loading audit records...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: HITL HUMAN REVIEW & DISPATCH QUEUE -->
+    <div id="tab-hitl-review" class="tab-pane">
+      <div class="glass-card">
+        <h2>
+          <span>📋 Clinical Decision Review Queue (Human-in-the-Loop)</span>
+          <button class="cta-btn btn-neutral btn-mini" onclick="loadReviewQueue()">Refresh Queue</button>
+        </h2>
+        <div class="card-caption">
+          TransplantIQ operates strictly as decision support. No organ is dispatched or assigned without two-factor human clinician review and digital authorization.
+        </div>
+
+        <div id="review-cards-wrap">
+          <div style="text-align:center;padding:2rem;color:var(--text-muted)">Loading pending reviews...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: DB2 SQL & OPTIMIZER WORKBENCH -->
+    <div id="tab-db2-workbench" class="tab-pane">
+      <div class="view-grid-2">
+        <div class="glass-card">
+          <h2>
+            <span>🗄️ Db2 SQL Optimizer & Access Plan Visualizer</span>
+            <span class="status-pill" style="font-size:0.7rem">Cost Model</span>
+          </h2>
+          <div class="card-caption">
+            Inspect how the Db2 Optimizer transforms multi-agent allocation queries into index scans (`IXSCAN`), nested-loop joins, and spatial evaluations.
+          </div>
+
+          <label style="font-size:0.78rem;font-weight:700;color:var(--text-muted)">Select Query Pattern:</label>
+          <select id="db2-query-pattern-select" style="margin-bottom:1rem" onchange="loadDb2ExplainPlan()">
+            <option value="matching">Multi-Center Candidate Selection (5-Locus HLA + Blood)</option>
+            <option value="temporal">Db2 System-Period Temporal Time-Travel Query</option>
+            <option value="spatial">Db2 Spatial Extender Geodesic Buffer Evaluation</option>
+          </select>
+
+          <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);margin-bottom:0.3rem">Executed Parameterized SQL:</div>
+          <div class="terminal-output" id="db2-sql-preview" style="max-height:100px;margin-bottom:1rem">Loading SQL...</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem">
+            <div style="background:#080d19;padding:0.75rem;border-radius:8px;border:1px solid #1a2744">
+              <div style="font-size:0.7rem;color:var(--text-muted)">OPTIMIZER COST (TIMERONS)</div>
+              <div style="font-size:1.3rem;font-weight:800;color:var(--accent-cyan);font-family:var(--font-mono)" id="db2-cost-val">42.15</div>
+            </div>
+            <div style="background:#080d19;padding:0.75rem;border-radius:8px;border:1px solid #1a2744">
+              <div style="font-size:0.7rem;color:var(--text-muted)">INDEX ACCELERATION</div>
+              <div style="font-size:1.1rem;font-weight:800;color:var(--green-corridor)" id="db2-speedup-val">94.2% Faster</div>
+            </div>
+          </div>
+
+          <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);margin-bottom:0.3rem">Recommended Enterprise Index:</div>
+          <div class="terminal-output" id="db2-index-rec" style="max-height:75px;color:var(--green-corridor)">CREATE INDEX...</div>
+        </div>
+
+        <div class="glass-card">
+          <h2><span>🌳 Db2 Access Path Execution Tree</span></h2>
+          <div class="card-caption">Visual operator sequence generated by Db2 SQL compiler.</div>
+          <div id="db2-operator-tree" style="background:#060a14;border:1px solid #1a2744;border-radius:8px;padding:1rem;min-height:360px">
+            Loading execution path...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Regulatory Notice Banner -->
+    <div class="regulatory-banner">
+      <strong>⚠️ Clinical Decision-Support Notice:</strong>
+      TransplantIQ is a specialized Clinical Decision-Support System developed for Db2Hack 2026.
+      It does <strong>not</strong> perform autonomous organ allocation. All sensitive organ allocation, green corridor transport dispatches, and status transitions mandate authorized, two-factor Human-in-the-Loop clinician review.
+      All medical records used in this prototype are synthetic, fully aligned with NOTTO (National Organ and Tissue Transplant Organization) and UNOS ethical frameworks.
+    </div>
+  </main>
+
+  <!-- MODAL: Clinical Allocation & Transport Certificate -->
+  <div class="modal-cover" id="dossier-modal">
+    <div class="modal-dossier">
+      <div class="dossier-header">
+        <h3 style="color:var(--accent-cyan);font-size:1.3rem;font-weight:800">Official Organ Allocation & Green Corridor Dispatch Manifest</h3>
+        <button class="close-cross" onclick="closeModal('dossier-modal')">&times;</button>
+      </div>
+      <div id="dossier-content-body">
+        <div style="text-align:center;padding:2rem">Generating verified dossier...</div>
+      </div>
+      <div class="btn-group" style="margin-top:1.5rem;justify-content:flex-end">
+        <button class="cta-btn btn-neutral" onclick="window.print()">🖨️ Print Clinical Dossier</button>
+        <button class="cta-btn" onclick="closeModal('dossier-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: IBM Db2 Enterprise Inspector -->
+  <div class="modal-cover" id="db2-inspector-modal">
+    <div class="modal-dossier">
+      <div class="dossier-header">
+        <h3 style="color:var(--accent-cyan);font-size:1.3rem;font-weight:800">IBM Db2 for z/OS Developer Architecture Inspector</h3>
+        <button class="close-cross" onclick="closeModal('db2-inspector-modal')">&times;</button>
+      </div>
+      <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem">
+        TransplantIQ is engineered natively upon IBM Db2 for z/OS (Subsystem DB2A), leveraging System-Period Temporal Tables, Spatial Extender, and DRDA connection protocol over Port 446.
+      </div>
+      <div class="terminal-output" id="db2-modal-ddl" style="max-height:280px">Loading z/OS DDL...</div>
+      <div class="btn-group" style="margin-top:1.25rem;justify-content:flex-end">
+        <button class="cta-btn" onclick="closeModal('db2-inspector-modal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Javascript Core Logic -->
+  <script>
+    const API = 'http://localhost:8000';
+    let leafletMapInstance = null;
+    let mapRouteLine = null;
+    let mapCourierMarker = null;
+    let hospitalsDataset = [];
+    let activePendingRequests = [];
+
+    // Switch Tabs
+    function activateTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-trigger').forEach(el => el.classList.remove('active'));
+      const target = document.getElementById(tabId);
+      if (target) target.classList.add('active');
+      event.currentTarget.classList.add('active');
+
+      if (tabId === 'tab-driver-nav') {
+        setTimeout(initOrRefreshDriverMap, 150);
+      }
+      if (tabId === 'tab-green-corridor-map') {
+        setTimeout(initOrRefreshLeafletMap, 150);
+      }
+      if (tabId === 'tab-cross-match-matrix') loadCrossMatchMatrix();
+      if (tabId === 'tab-db2-time-travel') { loadAuditLogs(); executeTemporalReconstruction(); }
+      if (tabId === 'tab-hitl-review') loadReviewQueue();
+      if (tabId === 'tab-db2-workbench') loadDb2ExplainPlan();
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('visible'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('visible'); }
+
+    async function openDb2Modal() {
+      openModal('db2-inspector-modal');
+      try {
+        const [d, zos] = await Promise.all([
+          fetch(API + '/api/db2/overview').then(r => r.json()),
+          fetch(API + '/api/db2/zos-status').then(r => r.json())
+        ]);
+        
+        let out = `-- IBM Db2 for z/OS Developer Architecture Proof --\n`;
+        out += `SUBSYSTEM:         ${zos.subsystem} (${zos.platform})\n`;
+        out += `LOCATION NAME:     ${zos.location}\n`;
+        out += `DRDA HOST/PORT:    ${zos.host}:${zos.drda_port} (SSL/AT-TLS Secured)\n`;
+        out += `ENCODING:          Unicode UTF-8 (CCSID ${zos.ccsid_ascii}) / EBCDIC (CCSID ${zos.ccsid_ebcdic})\n`;
+        out += `DATA SHARING:      ${zos.data_sharing_group} (Sysplex Continuous Availability)\n`;
+        out += `TEMPORAL STATUS:   ${zos.temporal_system_period}\n`;
+        out += `BUFFERPOOLS:       ${(zos.bufferpools || []).join(', ')}\n\n`;
+        out += d.sample_db2_ddl || '';
+        document.getElementById('db2-modal-ddl').textContent = out;
+      } catch (e) {
+        document.getElementById('db2-modal-ddl').textContent = 'Backend running on http://localhost:8000';
+      }
+    }
+
+    // Load Top Metrics
+    async function refreshTopKpis() {
+      try {
+        const s = await fetch(API + '/api/stats').then(r => r.json());
+        document.getElementById('kpi-donors-val').textContent = s.available_donors || 0;
+        document.getElementById('kpi-recipients-val').textContent = s.waiting_recipients || 0;
+        document.getElementById('kpi-hospitals-val').textContent = s.connected_hospitals || 8;
+        document.getElementById('kpi-margin-val').textContent = (s.avg_ischemia_margin_hours || 4.2) + 'h';
+        document.getElementById('kpi-pending-val').textContent = s.pending_requests || 0;
+      } catch (e) {
+        console.warn('Backend not responding yet:', e);
+      }
+    }
+
+    // Preset Scenario Selection
+    function selectScenario(type) {
+      const q = document.getElementById('agent-query-input');
+      if (type === 'heart') {
+        q.value = 'Find potential heart matches for urgent pediatric candidate within 4-hour ischemic limit using police green corridor';
+      } else if (type === 'kidney') {
+        q.value = 'Find potential kidney matches across all connected hospitals with 5-locus HLA analysis';
+      } else if (type === 'liver') {
+        q.value = 'Find potential liver matches for emergency high MELD score candidates';
+      } else if (type === 'temporal') {
+        q.value = 'Demonstrate Db2 time travel query for allocation audit history';
+      }
+      runAgentSwarm();
+    }
+
+    // Execute Multi-Agent Swarm
+    async function runAgentSwarm() {
+      const query = document.getElementById('agent-query-input').value.trim();
+      if (!query) return;
+
+      const log = document.getElementById('swarm-trace-output');
+      log.textContent = `[Supervisor] Directive received: "${query}"\n[Supervisor] Orchestrating 6-agent clinical swarm...\n`;
+
+      resetSwarmNodes();
+      highlightSwarmNode('supervisor');
+
+      const t0 = performance.now();
+      try {
+        const res = await fetch(API + '/api/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query })
+        }).then(r => r.json());
+
+        const t1 = performance.now();
+        document.getElementById('swarm-exec-time').textContent = `Latency: ${Math.round(t1 - t0)}ms`;
+
+        // Animate execution nodes
+        if (res.agent_steps && res.agent_steps.length) {
+          res.agent_steps.forEach(s => {
+            const nodeKey = s.agent.toLowerCase().replace('agent', '');
+            completeSwarmNode(nodeKey);
+            log.textContent += `[${s.agent}] ${s.action} → ${s.details}\n`;
+          });
+        }
+        completeSwarmNode('supervisor');
+        log.scrollTop = log.scrollHeight;
+
+        renderAllocationProposals(res.matches || []);
+        refreshTopKpis();
+      } catch (e) {
+        log.textContent += `\n[ERROR] Connection failed: ${e.message}\nPlease ensure the FastAPI backend is running on http://localhost:8000.`;
+      }
+    }
+
+    function resetSwarmNodes() {
+      ['supervisor', 'patient', 'matching', 'logistics', 'bioethics', 'coordination'].forEach(k => {
+        const c = document.getElementById(`agent-${k}`);
+        const b = document.getElementById(`badge-${k}`);
+        if (c) c.className = 'agent-card';
+        if (b) b.textContent = 'Idle';
+      });
+    }
+
+    function highlightSwarmNode(k) {
+      const c = document.getElementById(`agent-${k}`);
+      const b = document.getElementById(`badge-${k}`);
+      if (c) c.className = 'agent-card active';
+      if (b) b.textContent = 'Active';
+    }
+
+    function completeSwarmNode(k) {
+      const c = document.getElementById(`agent-${k}`);
+      const b = document.getElementById(`badge-${k}`);
+      if (c) c.className = 'agent-card done';
+      if (b) b.textContent = 'Done';
+    }
+
+    // Render Proposal Cards
+    function renderAllocationProposals(matches) {
+      const container = document.getElementById('proposals-target-container');
+      const badge = document.getElementById('matches-count-pill');
+      badge.textContent = `${matches.length} Verified Matches`;
+
+      if (!matches.length) {
+        container.innerHTML = `
+          <div style="text-align:center;padding:3rem 1rem;color:var(--text-muted)">
+            <div style="font-size:2rem;margin-bottom:0.5rem">⚠️</div>
+            <div>No candidate pairs met the strict clinical and biological thresholds for this criteria.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = matches.map((m, idx) => `
+        <div class="match-proposal-card">
+          <div class="match-card-head">
+            <div>
+              <div class="match-donor-recip">
+                #${idx + 1} Donor ${m.donor.name} (${m.donor.blood_group}) → Recipient ${m.recipient.name} (${m.recipient.blood_group})
+              </div>
+              <div class="match-subloc">
+                ${m.donor.organ_type.toUpperCase()} · ${m.donor.hospital_city} → ${m.recipient.hospital_city} (${m.logistics.distance_km} km)
+              </div>
+            </div>
+            <div class="match-score-badge">${m.score}/100</div>
+          </div>
+
+          <div class="matrix-chips">
+            <div class="m-chip">
+              <div class="m-chip-lbl">5-Locus HLA</div>
+              <div class="m-chip-val">${m.hla_score}%</div>
+            </div>
+            <div class="m-chip">
+              <div class="m-chip-lbl">Urgency Tier</div>
+              <div class="m-chip-val">${m.recipient.urgency_score}/10</div>
+            </div>
+            <div class="m-chip">
+              <div class="m-chip-lbl">Corridor Time</div>
+              <div class="m-chip-val" style="color:var(--green-corridor)">${m.logistics.total_transit_hours}h</div>
+            </div>
+            <div class="m-chip">
+              <div class="m-chip-lbl">Traffic Saved</div>
+              <div class="m-chip-val" style="color:var(--green-corridor)">+${m.logistics.time_saved_hours || 2.1}h</div>
+            </div>
+          </div>
+
+          <div class="corridor-bar-track">
+            <div class="corridor-bar-progress" style="width:${Math.max(15, Math.min(100, (m.logistics.margin_hours / m.logistics.max_ischemia_hours) * 100))}%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-muted);margin-top:0.35rem">
+            <span>Transport: <strong style="color:#fff">${m.logistics.transit_mode.split('(')[0]}</strong></span>
+            <span>Ischemia Margin: <strong style="color:var(--green-corridor)">${m.logistics.margin_hours}h</strong> of ${m.logistics.max_ischemia_hours}h</span>
+          </div>
+
+          <div style="font-size:0.8rem;color:#cbd5e1;margin-top:0.65rem;line-height:1.45">
+            ${m.explanation}
+          </div>
+
+          <div class="btn-group" style="margin-top:0.85rem">
+            <button class="cta-btn btn-mini" onclick="displayClinicalDossier(${JSON.stringify(m).replace(/"/g, '&quot;')})">🔍 Full Clinical Dossier</button>
+            <button class="cta-btn btn-emergency btn-mini" onclick="openDriverNavigation(${m.donor.donor_id}, ${m.recipient.recipient_id}, ${m.donor.hospital_id}, ${m.recipient.hospital_id}, '${m.donor.organ_type}')">🚑 Driver Route (Pickup → Dropoff)</button>
+            <button class="cta-btn btn-neutral btn-mini" onclick="showOnGisMap(${m.donor.hospital_id}, ${m.recipient.hospital_id}, '${m.donor.organ_type}')">🗺️ Trace Corridor</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ----------------------------------------------------
+    // LIVE GIS & GREEN CORRIDOR MAP (Leaflet + CartoDB Dark)
+    // ----------------------------------------------------
+    async function initOrRefreshLeafletMap() {
+      if (!leafletMapInstance) {
+        leafletMapInstance = L.map('gis-leaflet-map', {
+          center: [21.0, 78.5], // Center of India
+          zoom: 5,
+          zoomControl: true
+        });
+
+        // CartoDB Dark Matter tile layer for cyber-medical dark aesthetic
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+          subdomains: 'abcd',
+          maxZoom: 19
+        }).addTo(leafletMapInstance);
+      } else {
+        leafletMapInstance.invalidateSize();
+      }
+
+      await loadHospitalsData();
+      renderHospitalMarkers();
+      renderSelectedCorridorRoute();
+    }
+
+    async function loadHospitalsData() {
+      if (hospitalsDataset.length) return;
+      try {
+        hospitalsDataset = await fetch(API + '/api/hospitals').then(r => r.json());
+        const dSel = document.getElementById('map-donor-select');
+        const rSel = document.getElementById('map-recip-select');
+
+        dSel.innerHTML = hospitalsDataset.map(h => `<option value="${h.hospital_id}">${h.name} (${h.city})</option>`).join('');
+        rSel.innerHTML = hospitalsDataset.map(h => `<option value="${h.hospital_id}">${h.name} (${h.city})</option>`).join('');
+        if (hospitalsDataset.length > 3) rSel.selectedIndex = 3;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderHospitalMarkers() {
+      if (!leafletMapInstance || !hospitalsDataset.length) return;
+
+      hospitalsDataset.forEach(h => {
+        const customIcon = L.divIcon({
+          className: 'custom-hospital-marker',
+          html: `<div style="background:#0e1e3b;border:2px solid var(--accent-cyan);color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 12px var(--accent-cyan);font-size:12px;cursor:pointer">🏥</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
+        });
+
+        const marker = L.marker([h.latitude, h.longitude], { icon: customIcon }).addTo(leafletMapInstance);
+        marker.bindPopup(`
+          <div style="color:#0f172a;font-family:sans-serif;font-size:12px">
+            <strong>${h.name}</strong><br>
+            City: ${h.city}, ${h.state}<br>
+            Helipad: ${h.has_helipad ? '✅ Active Helipad' : '❌ Ground Transit'}<br>
+            ICU Capacity: ${h.icu_capacity} Beds
+          </div>
+        `);
+      });
+    }
+
+    async function renderSelectedCorridorRoute() {
+      const did = parseInt(document.getElementById('map-donor-select').value) || 1;
+      const rid = parseInt(document.getElementById('map-recip-select').value) || 4;
+      const organ = document.getElementById('map-organ-select').value || 'heart';
+
+      try {
+        const res = await fetch(API + '/api/logistics/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ donor_hospital_id: did, recipient_hospital_id: rid, organ_type: organ })
+        }).then(r => r.json());
+
+        const ev = res.evaluation;
+        const dHosp = res.donor_hospital;
+        const rHosp = res.recipient_hospital;
+
+        // Update HUD
+        document.getElementById('hud-route-name').textContent = `${dHosp.city} → ${rHosp.city}`;
+        document.getElementById('hud-mode-name').textContent = ev.transit_mode.split('(')[0];
+        document.getElementById('hud-distance-val').textContent = `${ev.distance_km} km`;
+        document.getElementById('hud-traffic-time').textContent = `${ev.normal_traffic_hours} hrs`;
+        document.getElementById('hud-corridor-time').textContent = `${ev.total_transit_hours} hrs`;
+        document.getElementById('hud-safety-window').textContent = `+${ev.margin_hours}h Ischemia Buffer`;
+        document.getElementById('hud-saving-banner').textContent = `🚀 SAVED ${ev.time_saved_hours}h (${ev.time_saved_pct}% FASTER VIA GREEN CORRIDOR)`;
+
+        // Render Waypoints Checkpoints
+        const wpBox = document.getElementById('waypoints-feed');
+        wpBox.innerHTML = (ev.waypoints || []).map(w => `
+          <div style="margin-bottom:0.4rem;display:flex;justify-content:space-between">
+            <span>• ${w.label}</span>
+            <span style="color:var(--accent-cyan);font-family:var(--font-mono)">+${w.est_elapsed_min}m</span>
+          </div>
+        `).join('');
+
+        // Draw Line on Map
+        if (leafletMapInstance) {
+          if (mapRouteLine) leafletMapInstance.removeLayer(mapRouteLine);
+          if (mapCourierMarker) leafletMapInstance.removeLayer(mapCourierMarker);
+
+          const latlngs = (ev.waypoints || []).map(w => [w.lat, w.lon]);
+
+          // Draw Glowing Green Corridor Route
+          mapRouteLine = L.polyline(latlngs, {
+            color: '#00ff9d',
+            weight: 5,
+            opacity: 0.9,
+            dashArray: '10, 10',
+            lineCap: 'round'
+          }).addTo(leafletMapInstance);
+
+          // Add animated vehicle marker along waypoint midpoint
+          const midPoint = latlngs[Math.floor(latlngs.length / 2)] || [dHosp.latitude, dHosp.longitude];
+          const courierIcon = L.divIcon({
+            className: 'courier-icon-pulse',
+            html: `<div style="background:#10b981;border:2px solid #fff;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px #00ff9d;font-size:16px;animation:pulse 1s infinite">🚑</div>`,
+            iconSize: [34, 34],
+            iconAnchor: [17, 17]
+          });
+          mapCourierMarker = L.marker(midPoint, { icon: courierIcon }).addTo(leafletMapInstance);
+
+          leafletMapInstance.fitBounds(mapRouteLine.getBounds(), { padding: [50, 50] });
+        }
+      } catch (e) {
+        console.error('Route error:', e);
+      }
+    }
+
+    function showOnGisMap(donorHid, recipHid, organ) {
+      activateTab('tab-green-corridor-map');
+      setTimeout(() => {
+        document.getElementById('map-donor-select').value = donorHid;
+        document.getElementById('map-recip-select').value = recipHid;
+        document.getElementById('map-organ-select').value = organ;
+        renderSelectedCorridorRoute();
+      }, 200);
+    }
+
+    // ----------------------------------------------------
+    // CLINICAL CROSS-MATCH MATRIX
+    // ----------------------------------------------------
+    async function loadCrossMatchMatrix() {
+      const organ = document.getElementById('matrix-filter-organ').value;
+      const blood = document.getElementById('matrix-filter-blood').value;
+      const wrap = document.getElementById('matrix-table-wrap');
+      wrap.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted)">Querying multi-center system of record...</div>';
+
+      try {
+        let url = `${API}/api/match?`;
+        if (organ) url += `organ=${organ}&`;
+        if (blood) url += `blood_group=${encodeURIComponent(blood)}&`;
+        const res = await fetch(url).then(r => r.json());
+
+        if (!res.matches || !res.matches.length) {
+          wrap.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted)">No matching pairs found above clinical threshold.</div>';
+          return;
+        }
+
+        wrap.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Score</th>
+                <th>Organ</th>
+                <th>Donor (Center)</th>
+                <th>Recipient (Center)</th>
+                <th>5-Locus HLA</th>
+                <th>Green Corridor Mode</th>
+                <th>Ischemia Margin</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${res.matches.map(m => `
+                <tr>
+                  <td><span class="match-score-badge" style="font-size:0.8rem;padding:0.2rem 0.6rem">${m.score}</span></td>
+                  <td><strong>${m.donor.organ_type.toUpperCase()}</strong></td>
+                  <td>${m.donor.name} (${m.donor.blood_group})<br><small style="color:var(--text-muted)">${m.donor.hospital_city}</small></td>
+                  <td>${m.recipient.name} (${m.recipient.blood_group})<br><small style="color:var(--text-muted)">${m.recipient.hospital_city}</small></td>
+                  <td><strong style="color:var(--green-corridor)">${m.hla_score}%</strong></td>
+                  <td>${m.logistics.transit_mode.split('(')[0]}</td>
+                  <td><strong style="color:var(--green-corridor)">+${m.logistics.margin_hours}h</strong></td>
+                  <td>
+                    <button class="cta-btn btn-neutral btn-mini" onclick="displayClinicalDossier(${JSON.stringify(m).replace(/"/g, '&quot;')})">Dossier</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (e) {
+        wrap.innerHTML = `<div style="padding:2rem;color:var(--red-urgent)">Error: ${e.message}</div>`;
+      }
+    }
+
+    // ----------------------------------------------------
+    // DB2 TIME-TRAVEL & AUDIT LEDGER
+    // ----------------------------------------------------
+    async function executeTemporalReconstruction() {
+      const ts = document.getElementById('temporal-timestamp-input').value;
+      const box = document.getElementById('temporal-console-output');
+      box.textContent = 'Executing IBM Db2 Temporal Query (FOR SYSTEM_TIME AS OF)...';
+
+      try {
+        const res = await fetch(`${API}/api/audit/temporal?as_of=${encodeURIComponent(ts)}`).then(r => r.json());
+        box.textContent = `Db2 SQL Prepared & Executed:\n${res.db2_query_syntax}\n\nReconstructed System of Record at [${res.as_of}]:\n`
+          + `• Available Donors in Registry: ${res.active_donors_count}\n`
+          + `• Waiting Candidates on Queue: ${res.waiting_recipients_count}\n\n`
+          + `Sample Donor Record State: ${JSON.stringify(res.donors_sample[0] || {}, null, 2)}\n`
+          + `Compliance Verification: 100% Temporal Audit Fidelity certified under NOTTO-2026.`;
+      } catch (e) {
+        box.textContent = 'Error: ' + e.message;
+      }
+    }
+
+    async function loadAuditLogs() {
+      const rows = document.getElementById('audit-table-rows');
+      try {
+        const logs = await fetch(API + '/api/audit/ledger?limit=25').then(r => r.json());
+        rows.innerHTML = logs.map(l => `
+          <tr>
+            <td>#${l.log_id}</td>
+            <td><strong style="color:var(--accent-cyan)">${l.agent_name}</strong></td>
+            <td><code>${l.action}</code></td>
+            <td style="max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.details}</td>
+            <td>${l.timestamp.slice(11, 19)}</td>
+            <td style="font-family:var(--font-mono);font-size:0.75rem;color:var(--accent-purple)">${l.hash_signature.slice(0, 20)}...</td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        rows.innerHTML = `<tr><td colspan="6" style="color:var(--red-urgent)">Error: ${e.message}</td></tr>`;
+      }
+    }
+
+    // ----------------------------------------------------
+    // HITL CLINICAL REVIEW QUEUE
+    // ----------------------------------------------------
+    async function loadReviewQueue() {
+      const wrap = document.getElementById('review-cards-wrap');
+      try {
+        const reqs = await fetch(API + '/api/requests').then(r => r.json());
+        activePendingRequests = reqs;
+
+        if (!reqs.length) {
+          wrap.innerHTML = '<div style="padding:2.5rem;text-align:center;color:var(--text-muted)">No allocation requests queued. Run the Agent Swarm first to generate clinical proposals.</div>';
+          return;
+        }
+
+        wrap.innerHTML = reqs.map(r => `
+          <div class="match-proposal-card">
+            <div class="match-card-head">
+              <div>
+                <div class="match-donor-recip">
+                  Allocation Request #${r.request_id}: Donor ${r.donor_name} → Recipient ${r.recipient_name}
+                </div>
+                <div class="match-subloc">
+                  ${r.organ_type.toUpperCase()} · ${r.donor_hospital} (${r.donor_city}) → ${r.recipient_hospital} (${r.recipient_city})
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:0.75rem">
+                <div class="ticking-clock" id="clock-${r.request_id}">⏱️ 04:32:15</div>
+                <span class="status-pill" style="font-weight:700;color:${r.status === 'APPROVED' ? 'var(--green-corridor)' : (r.status === 'REJECTED' ? 'var(--red-urgent)' : 'var(--amber-warn)')}">
+                  ${r.status}
+                </span>
+              </div>
+            </div>
+
+            <div class="matrix-chips">
+              <div class="m-chip"><div class="m-chip-lbl">Composite Score</div><div class="m-chip-val">${r.match_score}</div></div>
+              <div class="m-chip"><div class="m-chip-lbl">HLA Match</div><div class="m-chip-val">${r.hla_score}%</div></div>
+              <div class="m-chip"><div class="m-chip-lbl">Distance</div><div class="m-chip-val">${r.distance_km} km</div></div>
+              <div class="m-chip"><div class="m-chip-lbl">Transit Window</div><div class="m-chip-val" style="color:var(--green-corridor)">${r.est_transit_hours}h</div></div>
+            </div>
+
+            <div style="font-size:0.82rem;color:#cbd5e1;margin-bottom:0.6rem">
+              <strong>Clinical Rationale:</strong> ${r.match_explanation}
+            </div>
+
+            <div style="font-size:0.75rem;color:var(--text-muted)">
+              Audit Hash: <code style="color:var(--accent-cyan)">${(r.audit_hash || '').slice(0, 28)}...</code>
+            </div>
+
+            <div class="btn-group" style="margin-top:0.85rem">
+              ${r.status === 'PENDING' ? `
+                <button class="cta-btn btn-emergency btn-mini" onclick="authorizeAllocation(${r.request_id}, 'APPROVED')">✅ Authorize & Dispatch Green Corridor</button>
+                <button class="cta-btn btn-danger-action btn-mini" onclick="authorizeAllocation(${r.request_id}, 'REJECTED')">❌ Decline</button>
+              ` : `
+                <span style="font-size:0.8rem;color:var(--text-muted)">Authorized by <strong>${r.reviewed_by}</strong></span>
+              `}
+              <button class="cta-btn btn-neutral btn-mini" onclick="printOfficialCertificate(${r.request_id})">📜 Official Medical Certificate</button>
+              <button class="cta-btn btn-emergency btn-mini" onclick="openDriverNavigation(${r.donor_id}, ${r.recipient_id}, 0, 0, '${r.organ_type}')">🚑 Driver Route</button>
+            </div>
+          </div>
+        `).join('');
+
+        // Start live ticking countdown clocks for all requests
+        startLiveCountdownClocks();
+      } catch (e) {
+        wrap.innerHTML = `<div style="color:var(--red-urgent)">Error: ${e.message}</div>`;
+      }
+    }
+
+    let countdownTimerInterval = null;
+    function startLiveCountdownClocks() {
+      if (countdownTimerInterval) clearInterval(countdownTimerInterval);
+      let secondsLeft = 16340; // ~4.5 hours simulated countdown
+
+      countdownTimerInterval = setInterval(() => {
+        secondsLeft = Math.max(0, secondsLeft - 1);
+        const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, '0');
+        const mins = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, '0');
+        const secs = String(secondsLeft % 60).padStart(2, '0');
+        const display = `⏱️ ${hrs}:${mins}:${secs}`;
+
+        activePendingRequests.forEach(r => {
+          const el = document.getElementById(`clock-${r.request_id}`);
+          if (el) el.textContent = display;
+        });
+      }, 1000);
+    }
+
+    async function authorizeAllocation(id, status) {
+      const notes = prompt(`Enter clinical authorization notes for ${status}:`, status === 'APPROVED' ? 'Clinical crossmatch verified. Approved for immediate Level-1 Green Corridor dispatch.' : 'Declined due to recipient concurrent surgical complication.');
+      if (notes === null) return;
+
+      try {
+        await fetch(API + '/api/requests/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            request_id: id,
+            status: status,
+            reviewed_by: 'Dr. Sarah Chen, MD (Chief Transplant Officer)',
+            review_notes: notes
+          })
+        });
+        loadReviewQueue();
+        refreshTopKpis();
+      } catch (e) {
+        alert('Action error: ' + e.message);
+      }
+    }
+
+    async function printOfficialCertificate(id) {
+      openModal('dossier-modal');
+      const body = document.getElementById('dossier-content-body');
+      body.innerHTML = '<div style="text-align:center;padding:2rem">Generating cryptographic certificate...</div>';
+
+      try {
+        const c = await fetch(`${API}/api/requests/${id}/certificate`).then(r => r.json());
+        body.innerHTML = `
+          <div style="border:2px solid var(--border-card);border-radius:12px;padding:1.5rem;background:#060a14">
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid #1a2744;padding-bottom:1rem;margin-bottom:1rem">
+              <div>
+                <h3 style="color:var(--accent-cyan);font-size:1.2rem;font-family:var(--font-mono)">${c.certificate_id}</h3>
+                <div style="font-size:0.75rem;color:var(--text-muted)">National Organ Allocation & Police Green Corridor Dispatch Manifest</div>
+              </div>
+              <div style="text-align:right">
+                <span class="status-pill" style="color:var(--green-corridor);font-weight:700">${c.status}</span>
+                <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem">Issued: ${c.issued_at.slice(0, 19)}</div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+              <div style="background:#0b1325;padding:0.9rem;border-radius:8px">
+                <div style="font-size:0.75rem;font-weight:700;color:var(--accent-cyan)">DONOR CLINICAL SPECIFICATION</div>
+                <div style="font-size:0.85rem">ID: #${c.clinical_summary.donor.id} · Age: ${c.clinical_summary.donor.age} · Blood: <strong>${c.clinical_summary.donor.blood_group}</strong></div>
+                <div style="font-size:0.8rem;color:var(--text-muted)">Facility: ${c.clinical_summary.donor.hospital} (${c.clinical_summary.donor.city})</div>
+                <div style="font-size:0.75rem;color:#94a3b8;margin-top:0.3rem">HLA Profile: ${c.clinical_summary.donor.hla}</div>
+              </div>
+              <div style="background:#0b1325;padding:0.9rem;border-radius:8px">
+                <div style="font-size:0.75rem;font-weight:700;color:var(--accent-purple)">RECIPIENT SURGICAL RECIPIENT</div>
+                <div style="font-size:0.85rem">ID: #${c.clinical_summary.recipient.id} · Age: ${c.clinical_summary.recipient.age} · Blood: <strong>${c.clinical_summary.recipient.blood_group}</strong></div>
+                <div style="font-size:0.8rem;color:var(--text-muted)">Center: ${c.clinical_summary.recipient.hospital} (Urgency: ${c.clinical_summary.recipient.urgency_score}/10)</div>
+                <div style="font-size:0.75rem;color:#94a3b8;margin-top:0.3rem">HLA Profile: ${c.clinical_summary.recipient.hla}</div>
+              </div>
+            </div>
+
+            <div style="background:#0b1325;padding:0.9rem;border-radius:8px;margin-bottom:1rem">
+              <div style="font-size:0.75rem;font-weight:700;color:var(--green-corridor)">POLICE-ESCORTED GREEN CORRIDOR CLEARANCE</div>
+              <div style="font-size:0.82rem;color:#cbd5e1;margin-top:0.25rem">
+                Mode: <strong>${c.logistics.transit_mode}</strong> (${c.logistics.distance_km} km) ·
+                Transit Duration: <strong>${c.logistics.est_transit_hours} hrs</strong> ·
+                Cold Ischemia Boundary: <strong>${c.logistics.max_ischemic_hours} hrs</strong> (Viable: ${c.logistics.ischemia_viable ? 'YES' : 'NO'})
+              </div>
+            </div>
+
+            <div style="font-size:0.75rem;color:var(--text-muted);border-top:1px solid #1a2744;padding-top:0.8rem">
+              <div>Verification SHA-256: <code style="color:var(--accent-cyan);font-family:var(--font-mono)">${c.verification_hash}</code></div>
+              <div style="margin-top:0.2rem">Governance Protocol: ${c.governance.policy_framework} · Authorized Sign-Off: <strong>${c.governance.reviewed_by}</strong></div>
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        body.innerHTML = `<div style="color:var(--red-urgent)">Error: ${e.message}</div>`;
+      }
+    }
+
+    function displayClinicalDossier(m) {
+      openModal('dossier-modal');
+      const body = document.getElementById('dossier-content-body');
+      body.innerHTML = `
+        <div style="background:#060a14;border:1px solid var(--border-card);border-radius:12px;padding:1.5rem">
+          <h3 style="color:var(--accent-cyan);margin-bottom:0.4rem">Comprehensive Clinical Allocation Dossier</h3>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem">
+            Donor ${m.donor.name} → Recipient ${m.recipient.name} (${m.donor.organ_type.toUpperCase()})
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:0.75rem;margin-bottom:1rem">
+            <div style="background:#0b1325;padding:0.75rem;border-radius:8px;text-align:center">
+              <div style="font-size:0.68rem;color:var(--text-muted)">COMPOSITE SCORE</div>
+              <div style="font-size:1.4rem;font-weight:800;color:var(--accent-cyan);font-family:var(--font-mono)">${m.score}</div>
+            </div>
+            <div style="background:#0b1325;padding:0.75rem;border-radius:8px;text-align:center">
+              <div style="font-size:0.68rem;color:var(--text-muted)">5-LOCUS HLA</div>
+              <div style="font-size:1.4rem;font-weight:800;color:var(--green-corridor);font-family:var(--font-mono)">${m.hla_score}%</div>
+            </div>
+            <div style="background:#0b1325;padding:0.75rem;border-radius:8px;text-align:center">
+              <div style="font-size:0.68rem;color:var(--text-muted)">URGENCY/MELD</div>
+              <div style="font-size:1.4rem;font-weight:800;color:var(--accent-purple);font-family:var(--font-mono)">${m.urgency_score}</div>
+            </div>
+            <div style="background:#0b1325;padding:0.75rem;border-radius:8px;text-align:center">
+              <div style="font-size:0.68rem;color:var(--text-muted)">CORRIDOR SAFETY</div>
+              <div style="font-size:1.4rem;font-weight:800;color:var(--amber-warn);font-family:var(--font-mono)">${m.logistics.logistics_score}</div>
+            </div>
+          </div>
+
+          <div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);margin-bottom:0.3rem">Detailed 5-Locus HLA Allele Matches:</div>
+          <div style="background:#0b1325;padding:0.75rem;border-radius:8px;margin-bottom:1rem;font-size:0.8rem">
+            ${(m.hla_breakdown || []).map(h => `<div>• ${h}</div>`).join('')}
+          </div>
+
+          <div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);margin-bottom:0.3rem">Zero-Traffic Green Corridor Trajectory:</div>
+          <div style="background:#0b1325;padding:0.75rem;border-radius:8px;margin-bottom:1rem;font-size:0.8rem">
+            <div>• Distance: <strong>${m.logistics.distance_km} km</strong></div>
+            <div>• Transport Mode: <strong>${m.logistics.transit_mode}</strong></div>
+            <div>• Cleared Transit Time: <strong>${m.logistics.total_transit_hours} hrs</strong> (vs ${m.logistics.normal_traffic_hours || 4.2}h in civilian traffic)</div>
+            <div>• Ischemia Safety Buffer: <strong>+${m.logistics.margin_hours} hrs</strong> remaining (${m.logistics.viable ? 'SAFE & VIABLE' : 'CRITICAL WARNING'})</div>
+          </div>
+
+          <div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);margin-bottom:0.3rem">Bioethics & Non-Discrimination Audit:</div>
+          <div style="background:#0b1325;padding:0.75rem;border-radius:8px;font-size:0.8rem">
+            <div>• Policy Code: <strong>${m.bioethics.policy_code}</strong></div>
+            <div>• Ethics Certified: <strong>${m.bioethics.certified ? 'YES (NOTTO / UNOS Aligned)' : 'NO'}</strong></div>
+            ${(m.bioethics.reasons || []).map(r => `<div>• ${r}</div>`).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // ----------------------------------------------------
+    // DB2 WORKBENCH & EXPLAIN PLAN
+    // ----------------------------------------------------
+    async function loadDb2ExplainPlan() {
+      const qType = document.getElementById('db2-query-pattern-select').value;
+      try {
+        const d = await fetch(`${API}/api/db2/explain?query_type=${qType}`).then(r => r.json());
+        document.getElementById('db2-sql-preview').textContent = d.sql;
+        document.getElementById('db2-cost-val').textContent = d.estimated_cost_timerons;
+        document.getElementById('db2-speedup-val').textContent = d.speedup_percentage;
+        document.getElementById('db2-index-rec').textContent = d.recommended_index;
+
+        const tree = document.getElementById('db2-operator-tree');
+        tree.innerHTML = (d.access_path || []).map((step, idx) => `
+          <div style="display:flex;align-items:flex-start;gap:0.75rem;margin-bottom:0.75rem">
+            <div style="background:var(--accent-cyan);color:#000;font-weight:800;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.75rem">
+              ${step.step}
+            </div>
+            <div style="background:#0b1325;border:1px solid #1a2744;border-radius:8px;padding:0.6rem 0.8rem;flex:1">
+              <div style="display:flex;justify-content:space-between;font-size:0.8rem;font-weight:700">
+                <span style="color:var(--accent-cyan);font-family:var(--font-mono)">${step.operator} (${step.object})</span>
+                <span style="color:var(--text-muted);font-size:0.75rem">Cost: ${step.cost}</span>
+              </div>
+              <div style="font-size:0.75rem;color:#cbd5e1;margin-top:0.2rem">${step.details}</div>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // ----------------------------------------------------
+    // DRIVER ROUTE NAVIGATION (COLLECTION POINT -> DROPOFF)
+    // ----------------------------------------------------
+    let driverLeafletMap = null;
+    let driverRouteLine = null;
+    let driverStartMarker = null;
+    let driverEndMarker = null;
+    let driverVehicleMarker = null;
+    let driverSimulationInterval = null;
+    let driverSimulationStep = 0;
+    let driverWaypoints = [];
+    let currentDriverRouteData = null;
+
+    async function initOrRefreshDriverMap() {
+      if (!driverLeafletMap) {
+        driverLeafletMap = L.map('driver-leaflet-map', {
+          center: [20.5937, 78.9629],
+          zoom: 5,
+          zoomControl: true
+        });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+          subdomains: 'abcd',
+          maxZoom: 19
+        }).addTo(driverLeafletMap);
+      } else {
+        driverLeafletMap.invalidateSize();
+      }
+      await loadDriverDonorItems();
+      calculateAndDisplayDriverRoute();
+    }
+
+    async function loadDriverDonorItems() {
+      const dSel = document.getElementById('driver-donor-item-select');
+      const rSel = document.getElementById('driver-recipient-hosp-select');
+      if (dSel.children.length > 0 && rSel.children.length > 0) return;
+
+      try {
+        const [donors, hospitals] = await Promise.all([
+          fetch(API + '/api/donors').then(r => r.json()),
+          fetch(API + '/api/hospitals').then(r => r.json())
+        ]);
+
+        dSel.innerHTML = donors.map(d => `
+          <option value="${d.donor_id}" data-hid="${d.hospital_id}" data-organ="${d.organ_type}">
+            ${d.organ_type.toUpperCase()} (Donor #${d.donor_id}, ${d.blood_group}) - ${d.hospital_name} (${d.hospital_city})
+          </option>
+        `).join('');
+
+        rSel.innerHTML = hospitals.map(h => `
+          <option value="${h.hospital_id}">
+            ${h.name} (${h.city}, ${h.state})
+          </option>
+        `).join('');
+
+        if (rSel.options.length > 3) rSel.selectedIndex = 3;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function calculateAndDisplayDriverRoute(customDonorId, customRecipId, customDhId, customRhId, customOrgan) {
+      await loadDriverDonorItems();
+      const dSel = document.getElementById('driver-donor-item-select');
+      const rSel = document.getElementById('driver-recipient-hosp-select');
+
+      let donorId = customDonorId;
+      if (!donorId && dSel.selectedIndex >= 0) {
+        donorId = parseInt(dSel.value);
+      }
+      let selectedOption = dSel.options[dSel.selectedIndex];
+      if (customDonorId) {
+        for (let i = 0; i < dSel.options.length; i++) {
+          if (parseInt(dSel.options[i].value) === customDonorId) {
+            dSel.selectedIndex = i;
+            selectedOption = dSel.options[i];
+            break;
+          }
+        }
+      }
+
+      const dhId = customDhId || (selectedOption ? parseInt(selectedOption.dataset.hid) : 1);
+      let rhId = customRhId;
+      if (!rhId && rSel.selectedIndex >= 0) {
+        rhId = parseInt(rSel.value);
+      } else if (customRhId) {
+        for (let i = 0; i < rSel.options.length; i++) {
+          if (parseInt(rSel.options[i].value) === customRhId) {
+            rSel.selectedIndex = i;
+            break;
+          }
+        }
+      }
+
+      const organ = customOrgan || (selectedOption ? selectedOption.dataset.organ : 'heart');
+
+      try {
+        const res = await fetch(API + '/api/driver/route', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            donor_hospital_id: dhId,
+            recipient_hospital_id: rhId,
+            donor_id: donorId || null,
+            recipient_id: customRecipId || null,
+            organ_type: organ
+          })
+        }).then(r => r.json());
+
+        currentDriverRouteData = res;
+
+        // Update Start Point (Collection Place)
+        const sp = res.start_point;
+        document.getElementById('driver-start-name').textContent = sp.facility_name;
+        document.getElementById('driver-start-loc').textContent = sp.pickup_location;
+        document.getElementById('driver-start-city').textContent = `${sp.city}, ${sp.state}`;
+        document.getElementById('driver-item-label').textContent = `${sp.item_collected} (${sp.donor_blood_group})`;
+        document.getElementById('driver-temp-label').textContent = `${sp.container_temp_c}°C (${sp.organ_perfusion_solution})`;
+
+        // Update End Point (Dropping Destination)
+        const ep = res.end_point;
+        document.getElementById('driver-end-name').textContent = ep.facility_name;
+        document.getElementById('driver-end-loc').textContent = ep.dropoff_location;
+        document.getElementById('driver-end-city').textContent = `${ep.city}, ${ep.state}`;
+        document.getElementById('driver-team-label').textContent = ep.receiving_team;
+
+        // Update HUD Telemetry
+        const rt = res.route_summary;
+        document.getElementById('driver-total-distance').textContent = `${rt.distance_km} km`;
+        document.getElementById('driver-corridor-eta').textContent = `${rt.total_transit_hours} hrs`;
+        document.getElementById('driver-normal-traffic-time').textContent = `${rt.normal_traffic_hours} hrs (Saved ${rt.time_saved_hours}h)`;
+
+        // Update Db2 for z/OS Proof
+        const zos = res.db2_zos_audit;
+        document.getElementById('zos-subsystem-id').textContent = `${zos.zos_subsystem} (${zos.zos_version})`;
+        document.getElementById('zos-loc-id').textContent = zos.location_name;
+        document.getElementById('zos-tx-id').textContent = zos.transaction_id;
+
+        // Update Turn-by-turn Directions Feed
+        const turnsFeed = document.getElementById('driver-turns-feed');
+        turnsFeed.innerHTML = (res.turn_by_turn || []).map((t, idx) => `
+          <div class="driver-turn-card" id="turn-card-${idx}" style="background:#0b1325;border:1px solid #1a2744;border-radius:8px;padding:0.75rem;margin-bottom:0.6rem;transition:all 0.2s">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem">
+              <strong style="color:var(--accent-cyan)">STEP ${t.step}: ${t.action}</strong>
+              <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--green-corridor)">${t.distance} · Max ${t.speed_limit}</span>
+            </div>
+            <div style="font-size:0.8rem;color:#f1f5f9">${t.instruction}</div>
+            <div style="font-size:0.72rem;color:var(--green-corridor);margin-top:0.25rem">🚦 ${t.traffic_status}</div>
+          </div>
+        `).join('');
+
+        // Draw Route & Markers on Driver Map
+        if (driverLeafletMap) {
+          if (driverRouteLine) driverLeafletMap.removeLayer(driverRouteLine);
+          if (driverStartMarker) driverLeafletMap.removeLayer(driverStartMarker);
+          if (driverEndMarker) driverLeafletMap.removeLayer(driverEndMarker);
+          if (driverVehicleMarker) driverLeafletMap.removeLayer(driverVehicleMarker);
+
+          // Green Start Marker
+          const startIcon = L.divIcon({
+            className: 'marker-start',
+            html: `<div style="background:#00ff9d;color:#000;border:2px solid #fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px #00ff9d;font-weight:900;font-size:16px">🟢</div>`,
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
+          });
+          driverStartMarker = L.marker([sp.latitude, sp.longitude], { icon: startIcon }).addTo(driverLeafletMap);
+          driverStartMarker.bindPopup(`<strong>START POINT (COLLECTION PLACE)</strong><br>${sp.facility_name}<br>${sp.pickup_location}`);
+
+          // Red End Marker
+          const endIcon = L.divIcon({
+            className: 'marker-end',
+            html: `<div style="background:#ff3366;color:#fff;border:2px solid #fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px #ff3366;font-weight:900;font-size:16px">🔴</div>`,
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
+          });
+          driverEndMarker = L.marker([ep.latitude, ep.longitude], { icon: endIcon }).addTo(driverLeafletMap);
+          driverEndMarker.bindPopup(`<strong>END POINT (DROPPING POINT)</strong><br>${ep.facility_name}<br>${ep.dropoff_location}`);
+
+          // Extract coordinates
+          driverWaypoints = (rt.waypoints || []).map(w => [w.lat, w.lon]);
+          if (!driverWaypoints.length) {
+            driverWaypoints = [[sp.latitude, sp.longitude], [ep.latitude, ep.longitude]];
+          }
+
+          driverRouteLine = L.polyline(driverWaypoints, {
+            color: '#00ff9d',
+            weight: 6,
+            opacity: 0.95,
+            dashArray: '8, 8',
+            lineCap: 'round'
+          }).addTo(driverLeafletMap);
+
+          // Vehicle Courier Marker
+          const vehicleIcon = L.divIcon({
+            className: 'driver-vehicle',
+            html: `<div style="background:#10b981;border:2px solid #fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px #00ff9d;font-size:18px">🚑</div>`,
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
+          });
+          driverVehicleMarker = L.marker(driverWaypoints[0], { icon: vehicleIcon }).addTo(driverLeafletMap);
+
+          driverLeafletMap.fitBounds(driverRouteLine.getBounds(), { padding: [50, 50] });
+        }
+      } catch (e) {
+        console.error('Driver route calculation error:', e);
+      }
+    }
+
+    function onDriverItemChanged() {
+      calculateAndDisplayDriverRoute();
+    }
+
+    function onDriverRouteChanged() {
+      calculateAndDisplayDriverRoute();
+    }
+
+    function startDriverSimulation() {
+      if (!driverWaypoints.length || !driverVehicleMarker) return;
+      if (driverSimulationInterval) clearInterval(driverSimulationInterval);
+
+      let currentIdx = driverSimulationStep;
+      document.getElementById('btn-start-sim').textContent = '▶️ In Transit...';
+
+      driverSimulationInterval = setInterval(() => {
+        if (currentIdx >= driverWaypoints.length - 1) {
+          clearInterval(driverSimulationInterval);
+          document.getElementById('btn-start-sim').textContent = '🏁 Arrived at OT';
+          document.getElementById('driver-live-speed').textContent = '0 km/h (At OT In-Dock)';
+          alert('🎯 ARRIVAL CONFIRMED: Organ delivered to destination Operating Theater! Receiving team scrubbed in.');
+          return;
+        }
+
+        currentIdx++;
+        driverSimulationStep = currentIdx;
+        const nextCoord = driverWaypoints[currentIdx];
+        driverVehicleMarker.setLatLng(nextCoord);
+
+        const speeds = ['45 km/h', '82 km/h', '105 km/h', '115 km/h', '70 km/h', '20 km/h'];
+        document.getElementById('driver-live-speed').textContent = speeds[currentIdx % speeds.length];
+
+        document.querySelectorAll('.driver-turn-card').forEach((card, idx) => {
+          if (idx === currentIdx) {
+            card.style.borderColor = 'var(--accent-cyan)';
+            card.style.background = '#0e2445';
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } else {
+            card.style.borderColor = '#1a2744';
+            card.style.background = '#0b1325';
+          }
+        });
+      }, 1800);
+    }
+
+    function pauseDriverSimulation() {
+      if (driverSimulationInterval) {
+        clearInterval(driverSimulationInterval);
+        document.getElementById('btn-start-sim').textContent = '▶️ Resume Simulation';
+      }
+    }
+
+    function resetDriverSimulation() {
+      if (driverSimulationInterval) clearInterval(driverSimulationInterval);
+      driverSimulationStep = 0;
+      if (driverVehicleMarker && driverWaypoints.length) {
+        driverVehicleMarker.setLatLng(driverWaypoints[0]);
+      }
+      document.getElementById('btn-start-sim').textContent = '▶️ Start Simulation';
+      document.getElementById('driver-live-speed').textContent = '95 km/h';
+      document.querySelectorAll('.driver-turn-card').forEach(c => {
+        c.style.borderColor = '#1a2744';
+        c.style.background = '#0b1325';
+      });
+    }
+
+    function printDriverWaybill() {
+      if (!currentDriverRouteData) return;
+      openModal('dossier-modal');
+      const d = currentDriverRouteData;
+      const body = document.getElementById('dossier-content-body');
+      body.innerHTML = `
+        <div style="border:2px solid var(--border-card);border-radius:12px;padding:1.5rem;background:#060a14">
+          <div style="display:flex;justify-content:space-between;border-bottom:1px solid #1a2744;padding-bottom:1rem;margin-bottom:1rem">
+            <div>
+              <h3 style="color:var(--accent-cyan);font-size:1.25rem;font-family:var(--font-mono)">POLICE GREEN CORRIDOR DRIVER WAYBILL</h3>
+              <div style="font-size:0.75rem;color:var(--text-muted)">Emergency Organ Transit Courier & Police Escort Authorization (Harit Path)</div>
+            </div>
+            <div style="text-align:right">
+              <span class="status-pill" style="color:var(--green-corridor);font-weight:700">CODE-1 DISPATCH</span>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem">z/OS Transaction: ${d.db2_zos_audit.transaction_id}</div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div style="background:#081d19;border:1px solid var(--green-corridor);padding:0.9rem;border-radius:8px">
+              <div style="font-size:0.75rem;font-weight:800;color:var(--green-corridor)">🟢 START POINT · COLLECTION / PICKUP</div>
+              <div style="font-size:0.95rem;font-weight:800;color:#fff">${d.start_point.facility_name}</div>
+              <div style="font-size:0.8rem;color:#cbd5e1">${d.start_point.pickup_location}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted)">${d.start_point.city}, ${d.start_point.state}</div>
+              <div style="font-size:0.75rem;color:#a5b4fc;margin-top:0.3rem">Item: ${d.start_point.item_collected} | Container Temp: ${d.start_point.container_temp_c}°C</div>
+            </div>
+
+            <div style="background:#1b0d19;border:1px solid var(--red-urgent);padding:0.9rem;border-radius:8px">
+              <div style="font-size:0.75rem;font-weight:800;color:var(--red-urgent)">🔴 END POINT · DROPOFF DESTINATION</div>
+              <div style="font-size:0.95rem;font-weight:800;color:#fff">${d.end_point.facility_name}</div>
+              <div style="font-size:0.8rem;color:#cbd5e1">${d.end_point.dropoff_location}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted)">${d.end_point.city}, ${d.end_point.state}</div>
+              <div style="font-size:0.75rem;color:#a5b4fc;margin-top:0.3rem">Receiving Lead: ${d.end_point.receiving_team}</div>
+            </div>
+          </div>
+
+          <div style="background:#0b1325;padding:0.85rem;border-radius:8px;margin-bottom:1rem;font-size:0.8rem">
+            <div>🛣️ Total Distance: <strong>${d.route_summary.distance_km} km</strong> | Cleared Duration: <strong style="color:var(--green-corridor)">${d.route_summary.total_transit_hours} hrs</strong> (vs ${d.route_summary.normal_traffic_hours}h civilian traffic)</div>
+            <div>⏱️ Cold Ischemia Window: <strong>${d.route_summary.max_ischemia_hours} hrs</strong> | Safety Margin: <strong style="color:var(--green-corridor)">+${d.route_summary.margin_hours} hrs</strong></div>
+            <div>🚔 Police Clearance Protocol: ${d.route_summary.corridor_protocol}</div>
+          </div>
+
+          <div style="font-size:0.75rem;color:var(--text-muted);border-top:1px solid #1a2744;padding-top:0.8rem;display:flex;justify-content:space-between">
+            <span>IBM Db2 for z/OS Subsystem: <strong>${d.db2_zos_audit.zos_subsystem} (${d.db2_zos_audit.location_name})</strong></span>
+            <span>Driver Escort Signature: _______________________</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function openDriverNavigation(donorId, recipId, dhId, rhId, organ) {
+      activateTab('tab-driver-nav');
+      setTimeout(() => {
+        calculateAndDisplayDriverRoute(donorId, recipId, dhId, rhId, organ);
+      }, 200);
+    }
+
+    async function resetDemoDatabase() {
+      if (!confirm('Re-initialize and re-seed the clinical cohort?')) return;
+      try {
+        await fetch(API + '/api/admin/reset', { method: 'POST' });
+        alert('Database re-seeded successfully with 8 hospitals, 20 donors, and 35 recipients.');
+        refreshTopKpis();
+      } catch (e) {
+        alert('Reset failed: ' + e.message);
+      }
+    }
+
+    // Initial Bootstrap
+    refreshTopKpis();
+    loadHospitalsData();
+  </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  transplantiq-backend:
+    build: .
+    container_name: transplantiq-core
+    ports:
+      - "8000:8000"
+    environment:
+      - USE_DB2=false
+      - TRANSPLANTIQ_DB=/app/data/transplantiq.db
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  transplantiq-frontend:
+    image: nginx:alpine
+    container_name: transplantiq-ui
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - transplantiq-backend
+    restart: unless-stopped
+
